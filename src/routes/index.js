@@ -1,10 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
 import Home from '../views/Home';
 import PurchaseRequest from '../views/PurchaseRequest';
 import Stock from '../views/Stock';
-
 
 export default function routes() {
   return (

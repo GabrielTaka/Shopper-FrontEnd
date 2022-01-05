@@ -1,10 +1,11 @@
-import React, {useState, useEffect} from 'react';
-import Container from '@material-ui/core/Container';
+import React from 'react';
+
+//Material Components
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 
 
-function PurchaseFormStep({setPropsName, valueName, setPropsPurchase, valuePurchase}) {
+function PurchaseFormStep({ setPropsName, valueName, setPropsPurchase, valuePurchase }) {
 
   return (
     <Grid container spacing={3}>
@@ -17,6 +18,9 @@ function PurchaseFormStep({setPropsName, valueName, setPropsPurchase, valuePurch
           fullWidth
           onChange={e => setPropsName(e.target.value)}
           value={valueName}
+          key="Confirmation Code"
+          autoFocus={true}
+
         />
       </Grid>
 

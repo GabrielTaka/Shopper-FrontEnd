@@ -1,11 +1,13 @@
 import React, {useState, useEffect} from 'react'
-import * as S from './style'
+import api from '../../services/api'
+
+//General Components 
+import ProductsTable from '../../components/ProductsTable'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
-import api from '../../services/api'
-import ProductsTable from '../../components/ProductsTable'
 
 function Stock() {
+  
   const [products, setProducts] = useState([]);
 
   async function loadProducts() {
@@ -24,19 +26,11 @@ function Stock() {
   }, []);
 
   return (
-    <S.Container>
+    <div>
       <Header/>
-
-      <S.Title> 
-        <h3> ESTOQUE </h3>
-      </S.Title>
-
-      <S.Content>
-        <ProductsTable products={products} />
-      </S.Content>
-
+      <ProductsTable products={products} />
       <Footer/>
-    </S.Container>
+    </div>
   )
 }
 

@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import api from '../../services/api'
 import { format } from 'date-fns'
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 //Material Ui Components
 import Stepper from '@material-ui/core/Stepper';
@@ -59,6 +59,10 @@ const useStyles = makeStyles((theme) => ({
   },
   noStyle: {
     backgroundColor: "transparent"
+  },
+  cusBtn: {
+    color: '#3f51b5',
+    cursor: 'pointer'
   }
 }));
 
@@ -71,16 +75,22 @@ function Alert(props) {
 }
 
 export default function PurchaseRequest() {
-  const [productsItems, setProductsItems] = useState([]);
-  const [totalAmount, setTotalAmount] = useState(0);
   const [name, setName] = useState();
   const [purchaseDate, setPurchaseDate] = useState();
+
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [legacyProductsInPurchase, setLegacyProductsInPurchase] = useState([]);
+  
+  const [productsItems, setProductsItems] = useState([]);
   const [error, setError] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
-  const [products, setProducts] = useState([]);
-  const classes = useStyles();
   const steps = getSteps();
+
   const idParams = useParams()
+  const [titlePage, setTitlePage] = useState("Cadastrar novo cliente");
+  const [SubTitlePage, setSubTitlePage] = useState("Registre um novo cliente e sua lista de compras.");
+  const classes = useStyles();
 
   async function loadProducts() {
     await api.get(`/product`)
@@ -99,15 +109,20 @@ export default function PurchaseRequest() {
 
       let products = [];
       let totalAmount = 0;
-
       result.data.purchaseRequestProducts.forEach(purchase => {
-        console.log("XXXXXXXXXX")
-        console.log(purchase.amount_of_product)
-        console.log("XXXXXXXXXX")
-        products.push({quantity: purchase.quantity, id: purchase.product._id, amount_of_product: purchase.amount_of_product, price: purchase.product.price})
-        totalAmount = totalAmount + purchase.quantity * purchase.product.price
-      });
+        products.push(
+          {
+            quantity: purchase.quantity, 
+            id: purchase.product._id, 
+            amount_of_product: purchase.amount_of_product, 
+            price: purchase.product.price,
+            id_purchase_request_products: purchase._id
+          })
+            totalAmount = totalAmount + purchase.quantity * purchase.product.price
+          }
+        );
       setProducts(products)
+      setLegacyProductsInPurchase(products)
       setTotalAmount(totalAmount)
     }).catch((err) => {
       console.log(err)
@@ -118,7 +133,11 @@ export default function PurchaseRequest() {
     
     let dt = new Date(purchaseDate)
     const dtDateOnly = new Date(dt.valueOf() + dt.getTimezoneOffset() * 60 * 1000);
-
+    let filtered_produts = [] 
+    products.forEach(product => {
+      if(product.quantity > 0 ) filtered_produts.push(product)
+    });
+    
     await api.post(`/purchaseRequestProduct`, 
     {
       purchaseRequest: {
@@ -126,11 +145,11 @@ export default function PurchaseRequest() {
         delivery_date: `${format(new Date(dtDateOnly), "yyyy-MM-dd")}T15:00:00.000`,
         total_amount: totalAmount
       },
-      products: products
+      products: filtered_produts
     })
     .then((result) => {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      
+
     }).catch((err) => {
       console.log("Erro inesperado.")   
       console.log(err)
@@ -152,6 +171,7 @@ export default function PurchaseRequest() {
     })
     .then((result) => {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      
       
     }).catch((err) => {
       console.log("Erro inesperado.")   
@@ -187,26 +207,30 @@ export default function PurchaseRequest() {
   };
 
   const handleReset = () => {
+    setName("");
+    setPurchaseDate("");
+    setTotalAmount(0);
+    setProducts([]);
     setActiveStep(0);
   };
-
+  
   useEffect(() => {
     loadProducts();
-    if( idParams.id ) loadPurchaseProducts();
+    if( idParams.id ) {
+      setTitlePage("Atualizar dados do cliente")
+      setSubTitlePage("Atualize os dados do cliente e sua lista de compras.")
+      loadPurchaseProducts();
+    }
   }, []);
 
-  useEffect(() => {
-    console.log("Products selecionados")
-    console.log(products)
-  }, [products]);
-
+  
   return (
     <div>
       <Header className={classes.fixedBar}/>
       <Container maxWidth="lg" className={classes.cusMarginTop}>
         <div className={classes.cusMarginLeft}>
-          <h2> Cadastrar novo cliente</h2>
-          <p className={classes.cusSubTitle}> Registre um novo cliente e sua lista de compras.</p>
+          <h2> {titlePage}</h2>
+          <p className={classes.cusSubTitle}> {SubTitlePage}</p>
           <Divider />
         </div>
         
@@ -241,6 +265,7 @@ export default function PurchaseRequest() {
                           productsItems={productsItems}
                           setPropsTotalAmount={setTotalAmount}
                           valueTotalAmount={totalAmount}
+                          valueLegacyProductsInPurchase={legacyProductsInPurchase}
                         />
                       )}
                       
@@ -270,16 +295,13 @@ export default function PurchaseRequest() {
             ))}
           </Stepper>
           {activeStep === steps.length && (
-            <Paper square elevation={0} className={classes.resetContainer}>
-              <Typography>All steps completed - you&apos;re finished</Typography>
-              <Button onClick={handleReset} className={classes.button}>
-                Reset
-              </Button>
-            </Paper>
+            <Alert variant="outlined" severity="success">
+              Cliente cadastrado com sucesso! <span onClick={handleReset} className={classes.cusBtn}>Clique aqui</span>  para continuar cadastrando.
+            </Alert>
           )}
         </div>
       </Container>
-
+    <Footer/>
     </div> 
   );
 }
